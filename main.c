@@ -93,6 +93,7 @@ void uart_error_handle(app_uart_evt_t * p_event)
 #include "nrf_drv_clock.h"
 #include "sdk_errors.h"
 #include "app_error.h"
+#include "queue.h"
 
 #if LEDS_NUMBER <= 2
 #error "Board is not equipped with enough amount of LEDs"
@@ -132,7 +133,7 @@ static void led_toggle_timer_callback (void * pvParameter)
     bsp_board_led_invert(BSP_BOARD_LED_1);
 }
 
-static void hello()
+static void init_uart()
 {
     uint32_t err_code;
 
@@ -156,13 +157,49 @@ static void hello()
 
     APP_ERROR_CHECK(err_code);
 
-    printf("\r\nStart: \r\n");
+    printf("\r\nHello World!\r\n");
+}
+
+static QueueHandle_t q_handle;
+
+static void sender_task(void *p)
+{
+    int i = 0;
+
+    while(1)
+    {
+        printf("Sending %d\r\n", i);
+        if (!xQueueSend(q_handle, &i, 1000))
+        {
+            printf("Failed to send!\r\n");
+        }
+        i++;
+        vTaskDelay(2000);
+    }
+}
+
+static void receiver_task(void *p)
+{
+    int i = 0;
+
+    while(1)
+    {
+        if (xQueueReceive(q_handle, &i, 1000))
+        {
+            printf("Receiving %d\r\n", i);
+        }
+        else
+        {
+            printf("Failed to receive!\r\n");
+        }
+        i++;
+    }
 }
 
 int main(void)
 {
     ret_code_t err_code;
-    hello();
+    init_uart();
 
     /* Initialize clock driver for better time accuracy in FREERTOS */
     err_code = nrf_drv_clock_init();
@@ -171,8 +208,12 @@ int main(void)
     /* Configure LED-pins as outputs */
     bsp_board_leds_init();
 
+    q_handle = xQueueCreate(3, sizeof(int));
+
     /* Create task for LED0 blinking with priority set to 2 */
-    UNUSED_VARIABLE(xTaskCreate(led_toggle_task_function, "LED0", configMINIMAL_STACK_SIZE + 200, NULL, 2, &led_toggle_task_handle));
+    //UNUSED_VARIABLE(xTaskCreate(led_toggle_task_function, "LED0", configMINIMAL_STACK_SIZE + 200, NULL, 2, &led_toggle_task_handle));
+    UNUSED_VARIABLE(xTaskCreate(sender_task, "tx", configMINIMAL_STACK_SIZE + 200, NULL, 1, NULL));
+    UNUSED_VARIABLE(xTaskCreate(receiver_task, "rx", configMINIMAL_STACK_SIZE + 200, NULL, 1, NULL));
 
     /* Start timer for LED1 blinking */
     led_toggle_timer_handle = xTimerCreate( "LED1", TIMER_PERIOD, pdTRUE, NULL, led_toggle_timer_callback);
