@@ -1,4 +1,4 @@
-PROJECT_NAME     := blinky_FreeRTOS_pca10040
+PROJECT_NAME     := test_FreeRTOS_pca10040
 TARGETS          := nrf52832_xxaa
 OUTPUT_DIRECTORY := _build
 
@@ -6,7 +6,7 @@ SDK_ROOT := ../../../../../..
 PROJ_DIR := ../../..
 
 $(OUTPUT_DIRECTORY)/nrf52832_xxaa.out: \
-  LINKER_SCRIPT  := blinky_FreeRTOS_gcc_nrf52.ld
+  LINKER_SCRIPT  := test_FreeRTOS_gcc_nrf52.ld
 
 # Source files common to all targets
 SRC_FILES += \

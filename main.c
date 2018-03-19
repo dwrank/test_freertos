@@ -38,9 +38,9 @@
  * 
  */
 /** @file
- * @defgroup blinky_example_main main.c
+ * @defgroup test_example_main main.c
  * @{
- * @ingroup blinky_example_freertos
+ * @ingroup test_example_freertos
  *
  * @brief Blinky FreeRTOS Example Application main file.
  *
